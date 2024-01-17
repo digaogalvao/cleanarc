@@ -1,7 +1,9 @@
-﻿using FinancialManagement.Application.UseCases.CreateTransacao;
-using FinancialManagement.Application.UseCases.DeleteTransacao;
-using FinancialManagement.Application.UseCases.GetAllTransacao;
-using FinancialManagement.Application.UseCases.UpdateTransacao;
+﻿using FinancialManagement.Application.UseCases.TransacaoCreate;
+using FinancialManagement.Application.UseCases.TransacaoDelete;
+using FinancialManagement.Application.UseCases.TransacaoGetAll;
+using FinancialManagement.Application.UseCases.TransacaoGetById;
+using FinancialManagement.Application.UseCases.TransacaoUpdate;
+using FinancialManagement.Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
@@ -51,22 +53,36 @@ public class TransacoesController : ControllerBase
 
 
     [HttpGet]
-    public async Task<ActionResult<List<GetAllTransacaoResponse>>> GetAll(CancellationToken cancellationToken)
+    public async Task<ActionResult<List<TransacaoGetAllResponse>>> GetAll(CancellationToken cancellationToken)
     {
-        var response = await _mediator.Send(new GetAllTransacaoRequest(), cancellationToken);
+        var response = await _mediator.Send(new TransacaoGetAllRequest(), cancellationToken);
+        return Ok(response);
+    }
+
+    [HttpGet("{id}")]
+    public async Task<ActionResult<TransacaoGetByIdResponse>> 
+        GetById(Guid id, CancellationToken cancellationToken)
+    {
+        var request = new TransacaoGetByIdRequest(id);
+
+        var response = await _mediator.Send(request, cancellationToken);
+
+        if (response == null)
+            return BadRequest();
+
         return Ok(response);
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create(CreateTransacaoRequest request)
+    public async Task<IActionResult> Create(TransacaoCreateRequest request)
     {
-        var userId = await _mediator.Send(request);
-        return Ok(userId);
+        var createRequest = await _mediator.Send(request);
+        return Ok(createRequest);
     }
 
     [HttpPut("{id}")]
-    public async Task<ActionResult<UpdateTransacaoResponse>>
-        Update(Guid id, UpdateTransacaoRequest request, CancellationToken cancellationToken)
+    public async Task<ActionResult<TransacaoUpdateResponse>>
+        Update(Guid id, TransacaoUpdateRequest request, CancellationToken cancellationToken)
     {
         if (id != request.Id)
             return BadRequest();
@@ -82,9 +98,9 @@ public class TransacoesController : ControllerBase
         if (id is null)
             return BadRequest();
 
-        var deleteUserRequest = new DeleteTransacaoRequest(id.Value);
+        var deleteRequest = new TransacaoDeleteRequest(id.Value);
 
-        var response = await _mediator.Send(deleteUserRequest, cancellationToken);
+        var response = await _mediator.Send(deleteRequest, cancellationToken);
         return Ok(response);
     }
 }
